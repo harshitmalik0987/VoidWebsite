@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoidProject — Advanced Bot Dev & Web Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   VOID PROJECT — CORE VARIABLES & RESET
+══════════════════════════════════════════ */
+:root {
+  --void:       #000000;
+  --deep:       #040408;
+  --surface:    #0a0a14;
+  --card:       #0e0e1a;
+  --border:     rgba(120,80,255,0.18);
+  --glow:       #7850ff;
+  --glow2:      #00e5ff;
+  --glow3:      #ff3cac;
+  --text:       #e8e0ff;
+  --muted:      #6a6880;
+  --bright:     #ffffff;
+  --font-head:  'Syne', sans-serif;
+  --font-mono:  'Space Mono', monospace;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:var(--font-head);
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ══════════════════════════════════════════
+   CUSTOM CURSOR
+══════════════════════════════════════════ */
+#cursor{
+  position:fixed;width:12px;height:12px;
+  background:var(--glow);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .2s,height .2s,background .2s;
+  box-shadow:0 0 18px var(--glow),0 0 40px rgba(120,80,255,.4);
+}
+#cursor-ring{
+  position:fixed;width:38px;height:38px;
+  border:1.5px solid rgba(120,80,255,.5);
+  border-radius:50%;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:transform .12s ease,width .25s,height .25s,border-color .25s;
+}
+body:hover #cursor{opacity:1;}
+a:hover~#cursor,button:hover~#cursor{width:20px;height:20px;}
+
+/* ══════════════════════════════════════════
+   CANVAS PARTICLES
+══════════════════════════════════════════ */
+#particles{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;opacity:.55;
+}
+
+/* ══════════════════════════════════════════
+   NOISE OVERLAY
+══════════════════════════════════════════ */
+body::before{
+  content:'';position:fixed;inset:0;z-index:1;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size:200px;
+  pointer-events:none;opacity:.6;
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(4,4,8,.65);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  transition:padding .3s;
+}
+nav.scrolled{padding:14px 32px;}
+.nav-logo{
+  font-size:1.3rem;font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--glow),var(--glow2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{
+  color:var(--muted);font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;
+  text-decoration:none;transition:color .25s;font-family:var(--font-mono);
+}
+.nav-links a:hover{color:var(--glow2);}
+
+.nav-cta{
+  background:transparent;border:1px solid var(--glow);
+  color:var(--glow);padding:8px 18px;border-radius:4px;
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;
+  cursor:none;text-decoration:none;
+  transition:background .25s,color .25s,box-shadow .25s;
+  text-transform:uppercase;
+}
+.nav-cta:hover{
+  background:var(--glow);color:var(--void);
+  box-shadow:0 0 24px rgba(120,80,255,.55);
+}
+
+/* Hamburger */
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:none;background:none;border:none;padding:4px;}
+.hamburger span{width:24px;height:2px;background:var(--text);border-radius:2px;transition:.3s;}
+.mobile-menu{
+  display:none;position:fixed;inset:0;top:65px;z-index:490;
+  background:rgba(4,4,8,.97);backdrop-filter:blur(24px);
+  flex-direction:column;align-items:center;justify-content:center;gap:40px;
+}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{
+  font-size:2rem;font-weight:800;color:var(--text);text-decoration:none;
+  letter-spacing:-.02em;
+  transition:color .2s;
+}
+.mobile-menu a:hover{color:var(--glow);}
+
+/* ══════════════════════════════════════════
+   HERO SECTION
+══════════════════════════════════════════ */
+#hero{
+  position:relative;z-index:2;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:120px 24px 80px;
+  overflow:hidden;
+}
+
+/* Orb glows */
+.orb{
+  position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;
+}
+.orb-1{
+  width:520px;height:520px;
+  background:radial-gradient(circle,rgba(120,80,255,.22) 0%,transparent 70%);
+  top:-100px;left:-80px;animation:float1 8s ease-in-out infinite;
+}
+.orb-2{
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(0,229,255,.15) 0%,transparent 70%);
+  bottom:0;right:-60px;animation:float2 10s ease-in-out infinite;
+}
+.orb-3{
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(255,60,172,.12) 0%,transparent 70%);
+  top:40%;left:50%;transform:translate(-50%,-50%);
+  animation:float3 12s ease-in-out infinite;
+}
+
+@keyframes float1{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,40px);}}
+@keyframes float2{0%,100%{transform:translate(0,0);}50%{transform:translate(-25px,-35px);}}
+@keyframes float3{0%,100%{transform:translate(-50%,-50%);}50%{transform:translate(-50%,-55%);}  }
+
+/* Hero badge */
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(120,80,255,.1);border:1px solid rgba(120,80,255,.3);
+  padding:7px 18px;border-radius:100px;
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;
+  color:var(--glow2);text-transform:uppercase;
+  margin-bottom:28px;
+  animation:fadeUp .8s ease both;
+}
+.badge-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--glow2);
+  animation:pulse 1.6s ease infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+
+/* Hero headline */
+.hero-name{
+  font-size:clamp(3.2rem,12vw,9rem);
+  font-weight:800;line-height:.92;letter-spacing:-.04em;
+  margin-bottom:12px;
+  animation:fadeUp .9s .1s ease both;
+}
+.void-text{
+  background:linear-gradient(135deg,#fff 0%,var(--glow) 40%,var(--glow2) 70%,var(--glow3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  background-size:200%;
+  animation:shimmer 4s linear infinite;
+}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+
+.hero-sub{
+  font-size:clamp(1rem,3.5vw,1.6rem);color:var(--muted);
+  font-weight:600;letter-spacing:.01em;
+  margin-bottom:18px;
+  animation:fadeUp 1s .2s ease both;
+}
+.hero-typed{
+  font-family:var(--font-mono);font-size:clamp(.85rem,2.5vw,1.1rem);
+  color:var(--glow2);margin-bottom:44px;min-height:28px;
+  animation:fadeUp 1s .3s ease both;
+}
+.hero-typed .cursor-blink{
+  display:inline-block;width:2px;height:1.1em;background:var(--glow2);
+  vertical-align:middle;animation:blink .7s step-end infinite;margin-left:2px;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* CTA buttons */
+.hero-btns{
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
+  animation:fadeUp 1s .4s ease both;
+}
+.btn-primary{
+  padding:14px 32px;background:var(--glow);color:var(--void);
+  font-family:var(--font-head);font-weight:700;font-size:.92rem;
+  border:none;border-radius:6px;cursor:none;text-decoration:none;
+  letter-spacing:.03em;
+  transition:box-shadow .3s,transform .2s,background .3s;
+  box-shadow:0 0 28px rgba(120,80,255,.45);
+}
+.btn-primary:hover{
+  box-shadow:0 0 48px rgba(120,80,255,.7);transform:translateY(-2px);
+  background:#9070ff;
+}
+.btn-outline{
+  padding:14px 32px;background:transparent;color:var(--text);
+  font-family:var(--font-head);font-weight:700;font-size:.92rem;
+  border:1.5px solid rgba(255,255,255,.18);border-radius:6px;cursor:none;
+  text-decoration:none;letter-spacing:.03em;
+  transition:border-color .3s,transform .2s,background .3s;
+}
+.btn-outline:hover{
+  border-color:var(--glow2);color:var(--glow2);
+  background:rgba(0,229,255,.06);transform:translateY(-2px);
+}
+
+/* Scroll indicator */
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  animation:fadeUp 1s .6s ease both;
+  font-family:var(--font-mono);font-size:.65rem;letter-spacing:.15em;
+  color:var(--muted);text-transform:uppercase;
+}
+.scroll-line{
+  width:1px;height:52px;background:linear-gradient(var(--glow),transparent);
+  animation:scrollDown 1.8s ease infinite;
+}
+@keyframes scrollDown{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}51%{transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+
+/* ══════════════════════════════════════════
+   STATS STRIP
+══════════════════════════════════════════ */
+#stats{
+  position:relative;z-index:2;
+  padding:40px 24px;
+  background:rgba(14,14,26,.8);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.stats-grid{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:24px;text-align:center;
+}
+.stat-item{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s;}
+.stat-item.visible{opacity:1;transform:none;}
+.stat-num{
+  font-size:2.8rem;font-weight:800;line-height:1;
+  background:linear-gradient(135deg,var(--glow),var(--glow2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.stat-label{
+  font-family:var(--font-mono);font-size:.7rem;letter-spacing:.15em;
+  color:var(--muted);text-transform:uppercase;margin-top:6px;
+}
+
+/* ══════════════════════════════════════════
+   SECTIONS — SHARED
+══════════════════════════════════════════ */
+section{position:relative;z-index:2;}
+.section-wrap{max-width:1100px;margin:0 auto;padding:100px 24px;}
+.section-tag{
+  font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--glow);margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-tag::before{content:'';width:28px;height:1px;background:var(--glow);}
+.section-title{
+  font-size:clamp(2rem,6vw,3.8rem);font-weight:800;line-height:1;
+  letter-spacing:-.03em;margin-bottom:20px;
+}
+.section-desc{
+  font-size:1rem;color:var(--muted);max-width:520px;line-height:1.75;
+  margin-bottom:56px;
+}
+
+/* ══════════════════════════════════════════
+   ABOUT SECTION
+══════════════════════════════════════════ */
+#about .about-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+}
+.about-visual{
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.about-ring{
+  width:260px;height:260px;border-radius:50%;
+  border:2px solid rgba(120,80,255,.35);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  animation:spinSlow 18s linear infinite;
+}
+.about-ring::before{
+  content:'';position:absolute;inset:-12px;
+  border-radius:50%;border:1px dashed rgba(0,229,255,.2);
+  animation:spinSlow 24s linear infinite reverse;
+}
+.about-ring::after{
+  content:'';position:absolute;inset:-28px;
+  border-radius:50%;border:1px dashed rgba(255,60,172,.12);
+}
+@keyframes spinSlow{to{transform:rotate(360deg);}}
+.about-avatar{
+  width:200px;height:200px;border-radius:50%;
+  background:linear-gradient(135deg,var(--glow) 0%,var(--glow2) 50%,var(--glow3) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:4.5rem;
+  box-shadow:0 0 60px rgba(120,80,255,.35);
+  animation:spinSlow 18s linear infinite reverse;
+}
+.orbit-dot{
+  position:absolute;width:10px;height:10px;border-radius:50%;
+  background:var(--glow2);
+  box-shadow:0 0 12px var(--glow2);
+  top:0;left:50%;transform:translateX(-50%);
+}
+.about-text p{
+  font-size:1rem;color:var(--muted);line-height:1.8;margin-bottom:20px;
+}
+.about-text strong{color:var(--text);}
+.about-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+.about-tag{
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;
+  background:rgba(120,80,255,.1);border:1px solid rgba(120,80,255,.25);
+  color:var(--glow);padding:6px 14px;border-radius:4px;
+  transition:background .25s,border-color .25s;
+}
+.about-tag:hover{background:rgba(120,80,255,.22);border-color:var(--glow);}
+
+/* ══════════════════════════════════════════
+   SERVICES SECTION
+══════════════════════════════════════════ */
+#services{background:var(--deep);}
+.services-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;
+}
+.service-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;padding:36px 28px;
+  position:relative;overflow:hidden;
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+  opacity:0;transform:translateY(30px);
+}
+.service-card.visible{opacity:1;transform:none;transition:opacity .6s,transform .6s,border-color .3s,box-shadow .3s;}
+.service-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 0%,rgba(120,80,255,.08),transparent 60%);
+  opacity:0;transition:opacity .4s;
+}
+.service-card:hover{
+  border-color:rgba(120,80,255,.5);
+  transform:translateY(-6px);
+  box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(120,80,255,.15);
+}
+.service-card:hover::before{opacity:1;}
+.service-icon{font-size:2.4rem;margin-bottom:20px;display:block;}
+.service-title{
+  font-size:1.25rem;font-weight:700;margin-bottom:10px;letter-spacing:-.02em;
+}
+.service-desc{
+  font-size:.9rem;color:var(--muted);line-height:1.75;
+}
+.service-line{
+  width:40px;height:2px;margin-top:20px;
+  background:linear-gradient(90deg,var(--glow),var(--glow2));
+  border-radius:2px;
+}
+
+/* ══════════════════════════════════════════
+   SKILLS SECTION
+══════════════════════════════════════════ */
+#skills{background:var(--void);}
+.skills-layout{display:grid;grid-template-columns:1fr 1fr;gap:48px;}
+.skill-item{margin-bottom:24px;}
+.skill-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;
+}
+.skill-name{font-size:.9rem;font-weight:600;font-family:var(--font-mono);}
+.skill-pct{font-size:.8rem;color:var(--glow2);font-family:var(--font-mono);}
+.skill-bar{
+  height:4px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden;
+}
+.skill-fill{
+  height:100%;border-radius:100px;width:0;
+  background:linear-gradient(90deg,var(--glow),var(--glow2));
+  transition:width 1.4s cubic-bezier(.25,.46,.45,.94);
+  box-shadow:0 0 12px rgba(120,80,255,.5);
+}
+
+/* Tools grid */
+.tools-grid{
+  display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;
+}
+.tool-pill{
+  font-family:var(--font-mono);font-size:.75rem;
+  background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.18);
+  color:var(--glow2);padding:7px 16px;border-radius:100px;
+  letter-spacing:.06em;
+  transition:background .25s;cursor:default;
+}
+.tool-pill:hover{background:rgba(0,229,255,.14);}
+
+/* ══════════════════════════════════════════
+   PROJECTS / PORTFOLIO
+══════════════════════════════════════════ */
+#projects{background:var(--deep);}
+.projects-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;
+}
+.project-card{
+  border-radius:16px;overflow:hidden;border:1px solid var(--border);
+  background:var(--card);
+  transition:transform .3s,box-shadow .3s,border-color .3s;
+  opacity:0;transform:translateY(30px);
+}
+.project-card.visible{opacity:1;transform:none;transition:opacity .6s,transform .6s,box-shadow .3s;}
+.project-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 30px 70px rgba(0,0,0,.6);
+  border-color:rgba(0,229,255,.3);
+}
+.project-thumb{
+  height:180px;display:flex;align-items:center;justify-content:center;
+  font-size:3.5rem;position:relative;overflow:hidden;
+}
+.project-thumb-inner{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.5rem;
+}
+.project-body{padding:24px;}
+.project-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.project-tag{
+  font-family:var(--font-mono);font-size:.65rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--glow3);
+  background:rgba(255,60,172,.08);border:1px solid rgba(255,60,172,.2);
+  padding:3px 10px;border-radius:4px;
+}
+.project-name{font-size:1.1rem;font-weight:700;margin-bottom:8px;letter-spacing:-.02em;}
+.project-desc{font-size:.85rem;color:var(--muted);line-height:1.7;}
+.project-link{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.08em;
+  color:var(--glow2);margin-top:16px;text-decoration:none;
+  transition:gap .25s,opacity .25s;
+}
+.project-link:hover{gap:12px;}
+
+/* Thumb backgrounds */
+.thumb-a{background:linear-gradient(135deg,#1a0533,#3d0d6b);}
+.thumb-b{background:linear-gradient(135deg,#001a2e,#004d7a);}
+.thumb-c{background:linear-gradient(135deg,#1a0018,#6b0d5a);}
+.thumb-d{background:linear-gradient(135deg,#0d1a00,#1f6b0d);}
+
+/* ══════════════════════════════════════════
+   CONTACT SECTION
+══════════════════════════════════════════ */
+#contact{background:var(--void);}
+.contact-inner{
+  max-width:680px;margin:0 auto;text-align:center;
+}
+.contact-glow-wrap{
+  position:relative;padding:60px 40px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:24px;overflow:hidden;
+  margin-top:16px;
+}
+.contact-glow-wrap::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(120,80,255,.12),transparent 65%);
+  pointer-events:none;
+}
+.contact-links{
+  display:flex;flex-direction:column;gap:16px;margin-top:32px;
+}
+.contact-link{
+  display:flex;align-items:center;gap:16px;padding:18px 24px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;text-decoration:none;color:var(--text);
+  transition:background .25s,border-color .25s,transform .2s;
+}
+.contact-link:hover{
+  background:rgba(120,80,255,.1);border-color:rgba(120,80,255,.4);
+  transform:translateX(6px);
+}
+.contact-icon{font-size:1.5rem;}
+.contact-info{}
+.contact-info-label{
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:3px;
+}
+.contact-info-val{font-size:.95rem;font-weight:600;color:var(--glow2);}
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer{
+  position:relative;z-index:2;
+  border-top:1px solid var(--border);
+  padding:32px 24px;text-align:center;
+  background:var(--deep);
+}
+.footer-logo{
+  font-size:1.4rem;font-weight:800;
+  background:linear-gradient(135deg,var(--glow),var(--glow2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:12px;
+}
+footer p{
+  font-family:var(--font-mono);font-size:.72rem;color:var(--muted);letter-spacing:.1em;
+}
+footer a{color:var(--glow);text-decoration:none;}
+
+/* ══════════════════════════════════════════
+   ANIMATE ON SCROLL
+══════════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+
+/* ══════════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════════ */
+@media(max-width:768px){
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  #about .about-grid{grid-template-columns:1fr;gap:40px;}
+  .about-visual{margin-bottom:0;}
+  .skills-layout{grid-template-columns:1fr;}
+  .contact-glow-wrap{padding:36px 22px;}
+  nav{padding:16px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Particle Canvas -->
+<canvas id="particles"></canvas>
+
+<!-- ══════ NAVIGATION ══════ -->
+<nav id="navbar">
+  <div class="nav-logo">⬡ VoidProject</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="https://t.me/VoidxOxO" class="nav-cta" target="_blank">→ Hire Me</a>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about" onclick="toggleMenu()">About</a>
+  <a href="#services" onclick="toggleMenu()">Services</a>
+  <a href="#skills" onclick="toggleMenu()">Skills</a>
+  <a href="#projects" onclick="toggleMenu()">Projects</a>
+  <a href="https://t.me/VoidxOxO" target="_blank">Telegram ↗</a>
+</div>
+
+<!-- ══════ HERO ══════ -->
+<section id="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    Available for Projects
+  </div>
+
+  <h1 class="hero-name">
+    <span class="void-text">VoidProject</span>
+  </h1>
+
+  <p class="hero-sub">Advanced Bot Developer &amp; Web Designer</p>
+
+  <div class="hero-typed">
+    <span id="typed-text"></span><span class="cursor-blink"></span>
+  </div>
+
+  <div class="hero-btns">
+    <a href="#projects" class="btn-primary">🚀 See My Work</a>
+    <a href="https://t.me/VoidxOxO" class="btn-outline" target="_blank">✈️ Telegram</a>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    Scroll Down
+  </div>
+</section>
+
+<!-- ══════ STATS ══════ -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-num" data-count="50">0</div>
+      <div class="stat-label">⚡ Bots Built</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-count="30">0</div>
+      <div class="stat-label">🌐 Websites Designed</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-count="100">0</div>
+      <div class="stat-label">😊 Happy Clients</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-count="3">0</div>
+      <div class="stat-label">📅 Years Experience</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ ABOUT ══════ -->
+<section id="about">
+  <div class="section-wrap">
+    <div class="about-grid">
+      <div class="about-visual">
+        <div class="about-ring">
+          <div class="orbit-dot"></div>
+          <div class="about-avatar">🤖</div>
+        </div>
+      </div>
+      <div class="about-text">
+        <div class="section-tag">Who I Am</div>
+        <h2 class="section-title">Building in<br/><span class="void-text">The Void.</span></h2>
+        <p>Hey! 👋 I'm <strong>VoidProject</strong> — an advanced Telegram bot developer and modern web designer who loves crafting things that feel <strong>alive, smart, and beautiful.</strong></p>
+        <p>I build bots that actually <strong>think</strong> 🧠, automate the boring stuff 🤖, and create websites that make people stop and stare 👀. Every project I touch gets 100% of my focus.</p>
+        <p>Whether you need a powerful Telegram bot with AI features or a jaw-dropping website that converts visitors — <strong>you're in the right place.</strong> 🎯</p>
+        <div class="about-tags">
+          <span class="about-tag">Telegram Bots</span>
+          <span class="about-tag">Python</span>
+          <span class="about-tag">Web Design</span>
+          <span class="about-tag">HTML/CSS/JS</span>
+          <span class="about-tag">AI Integration</span>
+          <span class="about-tag">Oracle Linux</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ SERVICES ══════ -->
+<section id="services">
+  <div class="section-wrap">
+    <div class="section-tag">What I Do</div>
+    <h2 class="section-title">My Services</h2>
+    <p class="section-desc">Everything you need to build a powerful digital presence — from smart bots to stunning websites. 🔥</p>
+    <div class="services-grid">
+      <div class="service-card">
+        <span class="service-icon">🤖</span>
+        <div class="service-title">Advanced Telegram Bots</div>
+        <div class="service-desc">Custom Telegram bots with AI features, admin panels, payment systems, and complex automation. Your bot, your rules — fully coded from scratch.</div>
+        <div class="service-line"></div>
+      </div>
+      <div class="service-card">
+        <span class="service-icon">🌐</span>
+        <div class="service-title">Modern Web Design</div>
+        <div class="service-desc">Cool, fast, mobile-first websites with stunning animations. Built clean with HTML, CSS &amp; JS — no bloated frameworks unless needed.</div>
+        <div class="service-line"></div>
+      </div>
+      <div class="service-card">
+        <span class="service-icon">🧠</span>
+        <div class="service-title">AI Bot Integration</div>
+        <div class="service-desc">Connect your bots to AI APIs like GPT, Gemini, and more. Make your bot actually understand users — not just reply with static text.</div>
+        <div class="service-line"></div>
+      </div>
+      <div class="service-card">
+        <span class="service-icon">🖥️</span>
+        <div class="service-title">Server & Deployment</div>
+        <div class="service-desc">Deploy and host your bots or websites on VPS / Oracle Linux servers. I handle setup, config, and make sure it runs 24/7 without issues.</div>
+        <div class="service-line"></div>
+      </div>
+      <div class="service-card">
+        <span class="service-icon">⚡</span>
+        <div class="service-title">Bot Automation Systems</div>
+        <div class="service-desc">Automate your Telegram group/channel with advanced moderation, welcome flows, scheduled posts, and custom commands. Set and forget. ✅</div>
+        <div class="service-line"></div>
+      </div>
+      <div class="service-card">
+        <span class="service-icon">🎨</span>
+        <div class="service-title">UI/UX & Animations</div>
+        <div class="service-desc">Smooth, scroll-triggered animations and micro-interactions that make your website feel premium. First impressions that last. 💫</div>
+        <div class="service-line"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ SKILLS ══════ -->
+<section id="skills">
+  <div class="section-wrap">
+    <div class="section-tag">My Arsenal</div>
+    <h2 class="section-title">Skills &amp; Tools</h2>
+    <p class="section-desc">The tech stack I use to build powerful, reliable, and beautiful projects. 🛠️</p>
+
+    <div class="skills-layout">
+      <div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🐍 Python (Telegram Bots)</span>
+            <span class="skill-pct">95%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="95"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🌐 HTML / CSS</span>
+            <span class="skill-pct">92%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="92"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">✨ JavaScript / Animations</span>
+            <span class="skill-pct">85%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🧠 AI API Integration</span>
+            <span class="skill-pct">88%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="88"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🗄️ Database (SQL / MongoDB)</span>
+            <span class="skill-pct">80%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🖥️ Linux Server Admin</span>
+            <span class="skill-pct">82%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="82"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🎨 UI / UX Design</span>
+            <span class="skill-pct">90%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="90"></div></div>
+        </div>
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">🔧 Bot Architecture</span>
+            <span class="skill-pct">93%</span>
+          </div>
+          <div class="skill-bar"><div class="skill-fill" data-width="93"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tools-grid" style="margin-top:52px;">
+      <span class="tool-pill">pyrogram</span>
+      <span class="tool-pill">python-telegram-bot</span>
+      <span class="tool-pill">aiogram</span>
+      <span class="tool-pill">FastAPI</span>
+      <span class="tool-pill">SQLite</span>
+      <span class="tool-pill">MongoDB</span>
+      <span class="tool-pill">Nginx</span>
+      <span class="tool-pill">Oracle Linux</span>
+      <span class="tool-pill">Git</span>
+      <span class="tool-pill">Docker</span>
+      <span class="tool-pill">OpenAI API</span>
+      <span class="tool-pill">Gemini API</span>
+      <span class="tool-pill">Figma</span>
+      <span class="tool-pill">VS Code</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ PROJECTS ══════ -->
+<section id="projects">
+  <div class="section-wrap">
+    <div class="section-tag">Portfolio</div>
+    <h2 class="section-title">Featured Projects</h2>
+    <p class="section-desc">A few things I'm proud of building. Each one pushed me to level up. 💪</p>
+    <div class="projects-grid">
+      <div class="project-card">
+        <div class="project-thumb thumb-a">
+          <div class="project-thumb-inner">🤖</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="project-tag">Python</span>
+            <span class="project-tag">Telegram</span>
+            <span class="project-tag">AI</span>
+          </div>
+          <div class="project-name">VoidAI Bot</div>
+          <div class="project-desc">An advanced Telegram bot powered by AI that answers questions, generates content, and manages groups — all in one smart package. 🧠</div>
+          <a href="https://t.me/VoidxOxO" class="project-link" target="_blank">Contact to Learn More →</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumb thumb-b">
+          <div class="project-thumb-inner">🛡️</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="project-tag">Python</span>
+            <span class="project-tag">Anti-spam</span>
+          </div>
+          <div class="project-name">Guardian Bot</div>
+          <div class="project-desc">A powerful group moderation bot with anti-spam, welcome messages, captcha, custom commands, and full admin control panel. 💪</div>
+          <a href="https://t.me/VoidxOxO" class="project-link" target="_blank">Contact to Learn More →</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumb thumb-c">
+          <div class="project-thumb-inner">🌐</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="project-tag">HTML</span>
+            <span class="project-tag">CSS</span>
+            <span class="project-tag">JS</span>
+          </div>
+          <div class="project-name">Portfolio Sites</div>
+          <div class="project-desc">Modern, animated portfolio websites built from scratch — mobile-first, fast, and visually stunning. Exactly what clients need to impress. ✨</div>
+          <a href="https://t.me/VoidxOxO" class="project-link" target="_blank">Contact to Learn More →</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-thumb thumb-d">
+          <div class="project-thumb-inner">⚡</div>
+        </div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="project-tag">Automation</span>
+            <span class="project-tag">Scheduler</span>
+          </div>
+          <div class="project-name">AutoPost System</div>
+          <div class="project-desc">A Telegram channel automation bot that schedules posts, reposts media, auto-pins, and manages channel content 24/7 — no manual work needed. 🔄</div>
+          <a href="https://t.me/VoidxOxO" class="project-link" target="_blank">Contact to Learn More →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CONTACT ══════ -->
+<section id="contact">
+  <div class="section-wrap">
+    <div class="contact-inner">
+      <div class="section-tag" style="justify-content:center;">Let's Build Together</div>
+      <h2 class="section-title">Get In Touch 👋</h2>
+      <p style="color:var(--muted);line-height:1.75;margin-bottom:8px;">
+        Got a project idea? Want a bot or website built? Just want to say hi? 
+        Reach out — I reply fast and I'm <strong style="color:var(--text)">always ready to build something cool.</strong> 🚀
+      </p>
+      <div class="contact-glow-wrap">
+        <div class="contact-links">
+          <a href="https://t.me/VoidxOxO" class="contact-link" target="_blank">
+            <span class="contact-icon">✈️</span>
+            <div class="contact-info">
+              <div class="contact-info-label">Telegram</div>
+              <div class="contact-info-val">@VoidxOxO</div>
+            </div>
+            <span style="margin-left:auto;color:var(--muted);font-size:1.2rem;">→</span>
+          </a>
+          <a href="https://t.me/VoidxOxO" class="contact-link" target="_blank">
+            <span class="contact-icon">💬</span>
+            <div class="contact-info">
+              <div class="contact-info-label">Direct Message</div>
+              <div class="contact-info-val">t.me/VoidxOxO</div>
+            </div>
+            <span style="margin-left:auto;color:var(--muted);font-size:1.2rem;">→</span>
+          </a>
+          <div class="contact-link" style="cursor:default;justify-content:center;border-style:dashed;">
+            <span style="font-family:var(--font-mono);font-size:.8rem;color:var(--muted);">
+              ⚡ Usually responds within <strong style="color:var(--glow2)">1 hour</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FOOTER ══════ -->
+<footer>
+  <div class="footer-logo">⬡ VoidProject</div>
+  <p>Built with 💜 by <a href="https://t.me/VoidxOxO">@VoidxOxO</a> &nbsp;|&nbsp; Hosted on Oracle Linux 9 &nbsp;|&nbsp; © 2025 VoidProject</p>
+</footer>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script>
+/* ─── CURSOR ─── */
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => {
+  mx=e.clientX; my=e.clientY;
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+});
+(function animRing(){
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a,button,.service-card,.project-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.style.transform='translate(-50%,-50%) scale(2)';ring.style.borderColor='rgba(0,229,255,.6)';});
+  el.addEventListener('mouseleave',()=>{cursor.style.transform='translate(-50%,-50%) scale(1)';ring.style.borderColor='rgba(120,80,255,.5)';});
+});
+
+/* ─── MOBILE MENU ─── */
+function toggleMenu(){
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+/* ─── NAV SCROLL ─── */
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* ─── PARTICLES ─── */
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W,H,particles=[];
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize);resize();
+class Particle{
+  constructor(){this.reset();}
+  reset(){
+    this.x=Math.random()*W; this.y=Math.random()*H;
+    this.r=Math.random()*1.4+.3;
+    this.dx=(Math.random()-.5)*.35; this.dy=(Math.random()-.5)*.35;
+    this.alpha=Math.random()*.6+.1;
+    this.color=Math.random()<.5?'120,80,255':'0,229,255';
+  }
+  update(){
+    this.x+=this.dx; this.y+=this.dy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset();
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${this.color},${this.alpha})`;
+    ctx.fill();
+  }
+}
+for(let i=0;i<120;i++)particles.push(new Particle());
+function animParticles(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{p.update();p.draw();});
+  // Draw connecting lines
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<100){
+        ctx.beginPath();
+        ctx.strokeStyle=`rgba(120,80,255,${(1-dist/100)*.12})`;
+        ctx.lineWidth=.5;
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+/* ─── TYPED TEXT ─── */
+const phrases=[
+  'Building Telegram Bots 🤖',
+  'Crafting Stunning Websites 🌐',
+  'Integrating AI into Everything 🧠',
+  'Automating the Boring Stuff ⚡',
+  'Deploying on Oracle Linux 🖥️',
+];
+let pi=0,ci=0,deleting=false,speed=80;
+function type(){
+  const el=document.getElementById('typed-text');
+  const phrase=phrases[pi];
+  if(!deleting){
+    el.textContent=phrase.slice(0,ci+1);ci++;
+    if(ci===phrase.length){deleting=true;setTimeout(type,1800);return;}
+  }else{
+    el.textContent=phrase.slice(0,ci-1);ci--;
+    if(ci===0){deleting=false;pi=(pi+1)%phrases.length;}
+    speed=40;
+  }
+  if(!deleting)speed=80;
+  setTimeout(type,speed);
+}
+type();
+
+/* ─── INTERSECTION OBSERVER (cards + stats) ─── */
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      // Skill bars
+      e.target.querySelectorAll&&e.target.querySelectorAll('.skill-fill').forEach(bar=>{
+        bar.style.width=bar.dataset.width+'%';
+      });
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:.15});
+
+document.querySelectorAll('.service-card,.project-card,.stat-item').forEach(el=>io.observe(el));
+
+// Skill bars — observe their section
+const skillSection=document.querySelector('#skills .section-wrap');
+if(skillSection){
+  const sio=new IntersectionObserver(entries=>{
+    if(entries[0].isIntersecting){
+      document.querySelectorAll('.skill-fill').forEach(b=>b.style.width=b.dataset.width+'%');
+      sio.unobserve(skillSection);
+    }
+  },{threshold:.2});
+  sio.observe(skillSection);
+}
+
+/* ─── COUNT UP STATS ─── */
+const countIO=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const target=+e.target.dataset.count;
+      let cur=0;
+      const inc=target/60;
+      const t=setInterval(()=>{
+        cur=Math.min(cur+inc,target);
+        e.target.textContent=Math.floor(cur)+(target>=100?'+':'+');
+        if(cur>=target)clearInterval(t);
+      },20);
+      countIO.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.stat-num').forEach(el=>countIO.observe(el));
+
+/* ─── SMOOTH SCROLL for anchors ─── */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>
